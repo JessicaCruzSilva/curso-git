@@ -1,0 +1,16 @@
+[Unit]
+Description=EC rebatedor-fe
+
+[Service]
+Type=forking
+ExecStart=/opt/EC/erede/rebatedor-fe/rebatedor-fe.sh start
+ExecStop=/opt/EC/erede/rebatedor-fe/rebatedor-fe.sh stop
+ExecReload=/opt/EC/erede/rebatedor-fe/rebatedor-fe.sh restart
+User=ec_appl
+WorkingDirectory=/opt/EC/erede/rebatedor-fe
+KillMode=process
+Restart=on-failure
+RestartSec=15sec
+
+[Install]
+WantedBy=multi-user.target

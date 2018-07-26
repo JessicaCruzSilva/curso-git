@@ -1,0 +1,54 @@
+[{
+"maxValue": 20,
+"decision": "Aprovado",
+"riskLevel": "Baixíssimo Risco",
+"recommendation": "Aprovar"
+},
+{
+"minValue": 20.01,
+"maxValue": 30,
+"decision": "Aprovado",
+"riskLevel": "Baixo Risco",
+"recommendation": "Aprovar"
+},
+{
+"minValue": 30.01,
+"maxValue": 40,
+"decision": "Aprovado",
+"riskLevel": "Medio Baixo Risco",
+"recommendation": "Aprovar"
+},
+{
+"minValue": 40.01,
+"maxValue": 50,
+"decision": "Aprovado",
+"riskLevel": "Medio Risco",
+"recommendation": "Analisar Manualmente"
+},
+{
+"minValue": 50.01,
+"maxValue": 60,
+"decision": "Aprovado",
+"riskLevel": "Medio Alto Risco",
+"recommendation": "Negar"
+},
+{
+"minValue": 60.01,
+"maxValue": 70,
+"decision": "Aprovado",
+"riskLevel": "Alto Risco",
+"recommendation": "Negar"
+},
+{
+"minValue": 70.01,
+"maxValue": 999.99,
+"decision": "Aprovado",
+"riskLevel": "Altissimo Risco",
+"recommendation": "Negar"
+},
+{
+"minValue": 1000,
+"decision": "NegadaAutomaticamente" ,
+"riskLevel": "Altissimo Risco",
+"recommendation": "Negar"
+}]

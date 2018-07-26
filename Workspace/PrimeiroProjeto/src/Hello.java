@@ -1,0 +1,16 @@
+
+public class Hello {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		String teste="Jessica";
+		teste=teste.toUpperCase();
+		StringBuilder teste2=new StringBuilder();
+		
+		
+		
+		
+		System.out.println(teste);
+	}
+
+}

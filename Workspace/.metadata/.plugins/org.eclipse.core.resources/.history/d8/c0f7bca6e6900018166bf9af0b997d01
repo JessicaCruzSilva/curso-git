@@ -1,0 +1,11 @@
+
+public class Hello {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		String teste="Jessica";
+		teste="Orlando";
+		System.out.println(teste);
+	}
+
+}

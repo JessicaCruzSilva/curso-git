@@ -1,0 +1,165 @@
+# Blocks of code starting with '.' are hidden keys, they can be concatenated into stages.
+# Template CI, mostly used to CI Stages, it will run with runner CI and exclude the run on CD Branches
+.template_ci: &template_ci
+  tags:
+    - runner-ci
+  except:
+    - release
+    - master
+    - hotfix
+
+# TemplateCD, mostly used to CD Stages, it will run only CD Branches such as release/hotfix/master
+.template_cd: &template_cd
+  tags:
+    - runner-ci
+  only:
+    - release
+    - hotfix
+
+variables:
+# # This is the variable block, declare non sensitivity values here.
+# VARIABLE_01: "Example"
+  VERSION: "1.0.0"
+
+# Stages block, can have more but these ones are required.
+stages:
+ - config
+ - build
+ - test
+ - inspect
+ - package
+ - publish
+ - deploy
+ - goCDTrigger
+ - jiraNotify
+ 
+
+ #This stage is required, it will take some files from Releng Toolbox
+config:
+  image: docker.artifactoryci.awsrede.corp/releng:latest
+  stage: config
+  tags:
+    - runner-ci
+  script:
+    - mkdir config_ci
+    - cp -R /tmp/build_gradle.sh config_ci/
+    - cp -R /tmp/test_gradle.sh config_ci/
+    - cp -R /tmp/sonar_gradle.sh config_ci/
+  artifacts:
+    name: "rebatedor-fe"
+    paths:
+      - config_ci/ 
+
+
+# This stage is required, it will generate develop version of the package.
+build:
+  image: docker.artifactoryci.awsrede.corp/gradle-2.14.1-jdk8
+  stage: build
+  script:
+    - echo -e "\n Build step \n"
+    - bash ./config_ci/build_gradle.sh
+    - mkdir -p package/bin/
+    - cp -R build/libs/*.jar package/bin/
+    - cp -R artifacts/* package/
+  allow_failure: false
+  artifacts:
+    name: "rebatedor-fe"
+    paths:
+      - package/
+    expire_in: 1 day
+  tags:
+    - runner-ci
+  except:
+    - master
+
+# This stage is required, it will run unit tests of the application.
+unit_test:
+  image: docker.artifactoryci.awsrede.corp/gradle:4.0.1-jdk8
+  stage: test
+  script:
+    - echo -e "\n Unit tests. \n"
+    - bash ./config_ci/test_gradle.sh
+  allow_failure: true
+  artifacts:
+    paths:
+    - build/
+  only:
+   - branches
+  tags:
+   - runner-ci
+
+  
+
+# This stage is required, it will do static analysis of the code via SonarQube.
+sonar:
+  image: docker.artifactoryci.awsrede.corp/gradle:4.0.1-jdk8
+  stage: inspect
+  script:
+    - echo "Static Analysis"
+    - bash ./config_ci/test_gradle.sh
+  <<: *template_ci
+
+
+package:
+  image: docker.artifactoryci.awsrede.corp/releng:latest
+  stage: package
+  script:
+      - echo -e "\n Generates RPM \n"
+      - bash create_dir_to_rpm.sh
+      - cp -R *.rpm package/
+      - cp -R /tmp/publish_to_artifactory.sh package/
+      - cp -R /tmp/publishPackage.gradle package/
+  artifacts:
+    paths:
+      - package/
+  only:
+      - develop
+      - release
+      - hotfix
+      - releng-linux
+ 
+publish:
+  image: docker.artifactoryci.awsrede.corp/gradle-2.14.1-jdk8
+  stage: publish
+  script:
+   - mv package/*.rpm .
+   - mv package/*.gradle .
+   - mv package/publish_to_artifactory.sh .
+   - bash publish_to_artifactory.sh EC-rpm rebatedor*.rpm
+   - rm -rf package/*
+   - cp -R buildNumber package/
+  artifacts:
+    paths:
+      - package/
+  only:
+      - develop
+      - release
+      - hotfix
+      - releng-linux
+  
+# This stage is required, it will trigger an goCD pipeline to install the RPM into CI Server.
+goCD_Trigger:
+  image: docker.artifactoryci.awsrede.corp/releng:latest
+  stage: goCDTrigger
+  tags:
+    - runner-ci
+  script:
+    - echo -e "\n Publish to CI Server. \n"
+    - cp -R package/buildNumber .
+    - bash deploy_ci.sh EC rpm
+  only:
+    - develop
+
+# In this job the package will be sent to Jira
+create_jira_package:
+  image: docker.artifactoryci.awsrede.corp/releng:latest
+  stage: jiraNotify
+  tags:
+    - runner-ci
+  script:
+    - cp -R package/buildNumber .
+    - bash create_package_jira.sh EC app rpm $VERSION
+  when: manual
+  only:
+    - release
+    - hotfix
